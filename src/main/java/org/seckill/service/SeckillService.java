@@ -25,6 +25,7 @@ public interface SeckillService {
 	
 	/**
 	 * 查询单个秒杀记录
+	 * 采用redis缓存优化
 	 * @param seckillId
 	 * @return
 	 */

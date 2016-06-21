@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.seckill.dao.SeckillDao;
 import org.seckill.dao.SuccessKilledDao;
+import org.seckill.dao.cache.RedisDao;
 import org.seckill.dto.Exposer;
 import org.seckill.dto.SeckillExecution;
 import org.seckill.entity.Seckill;
@@ -30,6 +31,9 @@ public class SeckillServiceImpl implements SeckillService {
 	@Autowired
 	private SuccessKilledDao successKilledDao;
 	
+	@Autowired
+	private RedisDao redisDao;
+	
 	private final String salt = "@#$%^&ERTYHUJxcvbn3456";
 	
 	@Override
@@ -39,7 +43,14 @@ public class SeckillServiceImpl implements SeckillService {
 
 	@Override
 	public Seckill getSeckillById(long seckillId) {
-		return seckillDao.queryById(seckillId);
+		Seckill seckill = redisDao.getSeckill(seckillId);
+		if (null == seckill) {
+			seckill = seckillDao.queryById(seckillId);
+			if (null != seckill) {
+				redisDao.putSeckill(seckill);
+			}
+		}
+		return seckill;
 	}
 
 	@Override
