@@ -1,8 +1,11 @@
 package org.seckill.service.impl;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.commons.collections.MapUtils;
 import org.seckill.dao.SeckillDao;
 import org.seckill.dao.SuccessKilledDao;
 import org.seckill.dao.cache.RedisDao;
@@ -85,16 +88,16 @@ public class SeckillServiceImpl implements SeckillService {
 			throw new SeckillException("md5不一致");
 		}
 		try {
+			// 记录秒杀记录
+			int insertCount = successKilledDao.addSuccessKilled(seckillId, userPhone);
+			if (0 >= insertCount) {
+				throw new RepeatKillException("重复秒杀");
+			}
 			// 减库存
 			int updateCount = seckillDao.reduceNumById(seckillId, new Date());
 			if (0 >= updateCount) {
 				// 库存没了或者秒杀时间不符
 				throw new SeckillCloseException("秒杀已结束");
-			}
-			// 记录秒杀记录
-			int insertCount = successKilledDao.addSuccessKilled(seckillId, userPhone);
-			if (0 >= insertCount) {
-				throw new RepeatKillException("重复秒杀");
 			}
 			successKilled = successKilledDao.queryByIdWithSecKill(seckillId, userPhone);
 		} catch (SeckillCloseException e) {
@@ -123,5 +126,31 @@ public class SeckillServiceImpl implements SeckillService {
 		String base = seckillId + "/" + salt;
 		String md5 = DigestUtils.md5DigestAsHex(base.getBytes());
 		return md5;
+	}
+
+	@Override
+	public SeckillExecution executeSeckillProcedure(long seckillId, String userPhone, String md5) {
+		if (null == md5 || !md5.equals(getMD5(seckillId))) {
+			return new SeckillExecution(seckillId, SeckillStateEnum.DATA_REWRITE);
+		}
+		SuccessKilled successKilled = null;
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.put("seckillId", seckillId);
+		paramMap.put("userPhone", userPhone);
+		paramMap.put("killTime", new Date());
+		paramMap.put("result", null); //执行存储过程，result被赋值
+		try {
+			successKilledDao.killByProcedure(paramMap);
+			int result = MapUtils.getInteger(paramMap, "result", -2);
+			if (result == 0) {
+				successKilled = successKilledDao.queryByIdWithSecKill(seckillId, userPhone);
+			} else {
+				return new SeckillExecution(seckillId, SeckillStateEnum.stateOf(result));
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			return new SeckillExecution(seckillId, SeckillStateEnum.INNER_ERROR);
+		}
+		return new SeckillExecution(seckillId, SeckillStateEnum.SUCCESS, successKilled);
 	};
 }

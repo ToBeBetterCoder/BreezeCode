@@ -75,7 +75,8 @@ public class SeckillController {
 			return new SeckillResult<SeckillExecution>(false, "用户号码为空");
 		}
 		try {
-			SeckillExecution seckillExecution = seckillService.executeSeckill(seckillId, killPhone, md5);
+//			SeckillExecution seckillExecution = seckillService.executeSeckill(seckillId, killPhone, md5);
+			SeckillExecution seckillExecution = seckillService.executeSeckillProcedure(seckillId, killPhone, md5);
 			return new SeckillResult<SeckillExecution>(true, seckillExecution);
 		} catch(SeckillCloseException e) {
 			SeckillExecution seckillExecution = new SeckillExecution(seckillId, SeckillStateEnum.END);

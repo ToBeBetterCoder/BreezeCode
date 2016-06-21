@@ -26,4 +26,14 @@
 		on sk.seckill_id = s.seckill_id
 		where sk.seckill_id = #{0} and sk.user_phone = #{1};
 	</select>
+	
+	<!-- myBatis调用存储过程  -->
+	<select id="killByProcedure" statementType="CALLABLE">
+		call execute_seckill(
+			#{seckillId, jdbcType=BIGINT, mode=IN},
+			#{userPhone, jdbcType=CHAR, mode=IN},
+			#{killTime, jdbcType=TIMESTAMP, mode=IN},
+			#{result, jdbcType=INTEGER, mode=OUT}
+		)
+	</select>
 </mapper>

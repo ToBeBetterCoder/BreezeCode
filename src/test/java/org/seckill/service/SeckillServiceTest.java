@@ -47,5 +47,16 @@ public class SeckillServiceTest {
 		}
 		
 	}
+	
+	@Test
+	public void testExecuteSeckillProcedure() {
+		Exposer exposer = seckillService.exportSeckillUrl(1002);
+		if (exposer.isExposed()) {
+			SeckillExecution seckillExecution = seckillService.executeSeckillProcedure(exposer.getSeckillId(), "18106022321", exposer.getMd5());
+			System.out.println(seckillExecution);
+		} else {
+			System.out.println(exposer);
+		}
+	}
 
 }

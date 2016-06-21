@@ -1,6 +1,8 @@
 package org.seckill.dao;
 
 
+import java.util.Map;
+
 import org.seckill.entity.SuccessKilled;
 
 public interface SuccessKilledDao {
@@ -20,5 +22,11 @@ public interface SuccessKilledDao {
 	 * @return
 	 */
 	SuccessKilled queryByIdWithSecKill(long seckillId, String userPhone);
+
+	/**
+	 * 使用存储过程秒杀
+	 * @param paramMap
+	 */
+	void killByProcedure(Map<String, Object> paramMap);
 	
 }
